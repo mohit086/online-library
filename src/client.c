@@ -1,9 +1,10 @@
+#include "codes.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <arpa/inet.h>
 #include <sys/socket.h>
-#include "codes.h"
 
 void authenticate(int* sock){
     char username[CRED_SIZE], password[CRED_SIZE], auth_request[MSG_SIZE], auth_response[MSG_SIZE];
@@ -64,21 +65,28 @@ void operate(int* sock){
 
 int main(){
     int sock = 0;
-    struct sockaddr client_address;
-    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) < 0){ // UNIX domain stream socket with default protocol
+    struct sockaddr_in server_address;
+    
+    if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){ // IPv4 TCP-IP socket
         perror("SOCKET FAILED");
         return -1;
     }
-    client_address.sa_family = AF_UNIX;
-    strcpy(client_address.sa_data, "/tmp/socket"); // copy the socket path to the structure
-    if (connect(sock, &client_address, sizeof(client_address)) < 0){
+    server_address.sin_family = AF_INET;
+    server_address.sin_port = htons(PORT);
+    
+    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr)<=0) { // Localhost
+        perror("Invalid address/ Address not supported");
+        return -1;
+    }
+
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0){
         perror("CONNECTION FAILED");
         return -1;
     }
 
-    authenticate(&sock); // User authentication
-    operate(&sock); // Handling operateions
+    authenticate(&sock);
+    operate(&sock);
 
-    close(sock); // close client side socket
+    close(sock);
     return 0;
 }
