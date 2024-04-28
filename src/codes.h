@@ -1,0 +1,6 @@
+#define MSG_SIZE 1024
+#define CRED_SIZE 50
+#define DATABASE_ERROR -1
+#define AUTH_DONE 0
+#define MAX_CONNECTIONS 10
+#define MAX_CLIENTS 10
