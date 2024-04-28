@@ -1,116 +1,18 @@
-#include "codes.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-
-// Structure to store client information
-typedef struct {
-    int sock;
-    char username[CRED_SIZE];
-    bool is_logged_in;
-} client;
-
-client client_arr[MAX_CLIENTS]; // Array to store client information
-
-// Function to find client index by username
-int find_client_index(char *username) {
-    for (int i = 0; i < MAX_CLIENTS; i++) {
-        if (client_arr[i].is_logged_in && strcmp(client_arr[i].username, username) == 0) {
-            return i;
-        }
-    }
-    return -1;
-}
-
-// Function to handle client authentication
-int client_authenticate(char *username, char *password, int choice, char *auth_response) {
-    FILE *file = fopen("../db/user_db.txt", "r");
-    if (file == NULL) return DATABASE_ERROR;
-
-    char line[MSG_SIZE], stored_username[CRED_SIZE], stored_password[CRED_SIZE];
-    int username_exists = 0;
-
-    while (fgets(line, sizeof(line), file)) {
-        sscanf(line, "%[^:]:%s", stored_username, stored_password);
-        if (strcmp(username, stored_username) == 0){
-            username_exists = 1;
-            break;
-        }
-    }
-    fclose(file);
-
-    if (choice == 0){
-        if (username_exists) strcpy(auth_response, "USERNAME EXISTS");
-        else {
-            file = fopen("../db/user_db.txt", "a");
-            fprintf(file, "\n%s:%s", username, password);
-            fclose(file);
-            strcpy(auth_response, "AUTH_SUCCESS");
-        }
-    } 
-    else {
-        if (username_exists){
-            if (strcmp(password, stored_password) == 0) {
-                if (find_client_index(username) != -1) strcpy(auth_response, "ALREADY LOGGED IN");
-                else strcpy(auth_response, "AUTH_SUCCESS");
-            }
-            else strcpy(auth_response, "INVALID PASSWORD");
-        }
-        else strcpy(auth_response, "USERNAME NOT FOUND");
-    }
-    return AUTH_DONE;
-}
+#include "../headers/codes.h"
+#include "../headers/server_utilities.h"
+client client_arr[MAX_CLIENTS];
 
 // handles client operations (Thread function)
-void* client_handler(void* sockfd) {
+void* client_handler(void* sockfd){
     int sock = *((int *)sockfd), choice;
     char auth_request[MSG_SIZE], auth_response[MSG_SIZE], username[CRED_SIZE], password[CRED_SIZE];
-
-    while (1){ // Authentication process
-        if (read(sock, auth_request, MSG_SIZE) <= 0) return NULL;
-        sscanf(auth_request, "AUTH %d %[^:]:%s", &choice, username, password);
-        if (client_authenticate(username, password, choice, auth_response) == DATABASE_ERROR) {
-            perror("DATABASE ERROR");
-        }
-        send(sock, auth_response, sizeof(auth_response), 0);
-        if (strcmp(auth_response, "AUTH_SUCCESS") == 0) {
-            int index = find_client_index(username);
-            if (index != -1) {
-                strcpy(auth_response, "ALREADY_LOGGED_IN");
-                send(sock, auth_response, sizeof(auth_response), 0);
-                close(sock);
-                return NULL;
-            } else {
-                // Add client information
-                for (int i = 0; i < MAX_CLIENTS; i++) {
-                    if (!client_arr[i].is_logged_in) {
-                        client_arr[i].sock = sock;
-                        strcpy(client_arr[i].username, username);
-                        client_arr[i].is_logged_in = true;
-                        break;
-                    }
-                }
-                if (strcmp(username, "admin") == 0) printf("ADMIN LOGIN\n\n");
-                else printf("CLIENT %s CONNECTED\n\n", username);
-                break;
-            }
-        }
-    }
+    server_side_authenticate(&sock, auth_request, username, password, choice, auth_response);
 
     while (1){ // Operation process
         memset(auth_request, 0, sizeof(auth_request));
-        if (read(sock, auth_request, MSG_SIZE) == 0 || strcmp(auth_request, "logout") == 0) {
-            int index = find_client_index(username);
-            if (index != -1) {
-                client_arr[index].is_logged_in = false;
-            }
+        if (read(sock, auth_request, MSG_SIZE) == 0 || strcmp(auth_request, "logout") == 0){
             printf("%s LOGGED OUT\n\n", username);
+            client_arr[get_client(username)].is_online = 0;
             break;
         }
         printf("%s: %s\n", username, auth_request);
@@ -123,6 +25,7 @@ void* client_handler(void* sockfd) {
 }
 
 int main(){
+    memset(client_arr, 0, sizeof(client_arr));
     int server_fd, sock;
     struct sockaddr_in address;
     socklen_t addrlen = sizeof(address);
@@ -138,16 +41,17 @@ int main(){
         perror("\nBIND FAILED\n");
         return -1;
     }
+    signal(SIGINT, signal_handler);
 
     if (listen(server_fd, MAX_CLIENTS) < 0) { // Listen for connections
         perror("\nLISTEN FAILED\n");
         return -1;
     }
     printf("LIBRARY SERVER STARTED\n\n");
-    for (int i = 0; i < MAX_CLIENTS; i++) client_arr[i].is_logged_in = false; // Initialize client array
+    for (int i = 0; i < MAX_CLIENTS; i++) client_arr[i].is_online = false; // Initialize client array
 
     while (1){ // Accept connections in a loop with a new thread for each connection
-        if ((sock = accept(server_fd, (struct sockaddr *)&address, &addrlen)) == -1) {
+        if ((sock = accept(server_fd, (struct sockaddr *)&address, &addrlen)) == -1){
             perror("\nACCEPT FAILED\n");
             return -1;
         }
@@ -155,6 +59,5 @@ int main(){
         pthread_create(&thrd, NULL, client_handler, (void *)&sock);
         pthread_detach(thrd);
     }
-    unlink("/tmp/socket");
     return 0;
 }
