@@ -8,13 +8,20 @@ void* client_handler(void* sockfd){
     char auth_request[MSG_SIZE], auth_response[MSG_SIZE], username[CRED_SIZE], password[CRED_SIZE];
     server_side_authenticate(&sock, auth_request, username, password, choice, auth_response);
 
-    while (1){ // Operation process
+    while (1){
         memset(auth_request, 0, sizeof(auth_request));
-        if (read(sock, auth_request, MSG_SIZE) == 0 || strcmp(auth_request, "logout") == 0){
+        if (read(sock, auth_request, MSG_SIZE) == 0){
             printf("%s LOGGED OUT\n\n", username);
             client_arr[get_client(username)].is_online = 0;
             break;
         }
+
+        char str1[MSG_SIZE], str2[MSG_SIZE], str3[MSG_SIZE];
+        int num1, num2;
+        sscanf(auth_request, "%[^/]/%d/%[^/]/%[^/]/%d", str1, &num1, str2, str3, &num2);
+
+        if (strcmp(str1,"ADDBOOK")==0) add_book(num1,str2,str3,num2);
+
         printf("%s: %s\n", username, auth_request);
         write(sock, "OK", strlen("OK"));
         printf("server: %s\n\n", "OK");

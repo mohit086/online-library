@@ -1,21 +1,13 @@
 #include "../headers/codes.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <sys/un.h>
-#include <signal.h>
-#include <pthread.h>
-#include <stdbool.h>
-#include <arpa/inet.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 
+// Function declarations
 int get_client(char *username);
 int add_user(char *username);
 void signal_handler(int signum);
-void client_authenticate(char *username, char *password, int choice, char *auth_response);
 void server_side_authenticate(int* sock, char* auth_request, char* username, char* password,int choice, char* auth_response);
+int delete_line(FILE* fp);
+int add_book(int id, char* title, char* author, int quantity);
+int rm_book(int book_id);
 
 // Structure to store client information
 typedef struct {
@@ -23,4 +15,5 @@ typedef struct {
     int is_online;
 } client;
 
-extern client client_arr[MAX_CLIENTS]; // Array to store all users and their online status
+// Array to store all users and their online status
+extern client client_arr[MAX_CLIENTS]; 
