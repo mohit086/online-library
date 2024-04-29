@@ -1,2 +1,2 @@
-gcc server.c server_utilities.c -o server -lpthread
+gcc server.c utilities.c -o server -lpthread
 ./server

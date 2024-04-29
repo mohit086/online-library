@@ -1,4 +1,4 @@
-#include "../headers/codes.h"
+#include "../headers/head.h"
 
 int authenticate(int* sock){
     char username[CRED_SIZE], password[CRED_SIZE], auth_request[MSG_SIZE], auth_response[MSG_SIZE];
@@ -64,9 +64,11 @@ void operate(int* sock, int is_admin){
         if (!is_admin){
             while(1){
                 printf("Enter choice: ");
-                scanf("%d",&choice);
-                if (choice>0 && choice<9) break;
-                else printf("Invalid choice\n");
+                if (scanf("%d",&choice)!= 1 || (choice>0 && choice<9)){
+                    while (getchar() != '\n');
+                    continue;
+                }
+                break;
             }
             switch(choice){
             case(1): // view available books
@@ -120,16 +122,19 @@ void operate(int* sock, int is_admin){
 
         else{
             while(1){
-                printf("Enter Choice: ");
-                scanf("%d",&choice);
-                if (choice>0 && choice<8) break;
-                else printf("Invalid choice\n");
+                printf("Enter choice: ");
+                if (scanf("%d",&choice)!= 1 || (choice>0 && choice<8)){
+                    while (getchar() != '\n');
+                    continue;
+                }
+                break;
             }
             switch(choice){
             case(1): // add a book
                 memset(title,0,TITLE_SIZE);
                 memset(author,0,AUTHOR_SIZE);
-                quantity = 0;
+                printf("Enter id: ");
+                scanf("%d",&book_id);
                 printf("Enter name: ");
                 scanf(" %[^\n]",title);
                 printf("Enter author: ");
