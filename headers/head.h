@@ -7,7 +7,6 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <pthread.h>
-// #include <stdbool.h>
 #include <arpa/inet.h>
 
 #define MSG_SIZE 1024
@@ -18,32 +17,33 @@
 #define AUTHOR_SIZE 64
 
 // Structure to store client information
-struct On_status{
+typedef struct{
     char name[CRED_SIZE];
     int is_online;
-};
+} On_status;
 
 // structure for user
-struct User {
+typedef struct {
     char username[CRED_SIZE];
     char password[CRED_SIZE];
     int valid;
-};
+} User;
 
 // structure for book
-struct Book{
+typedef struct{
     int id;
     char title[TITLE_SIZE];
     char author[AUTHOR_SIZE];
     int quantity;
     int valid;
-};
+} Book;
 
 // structure for book issue
-struct Issue {
+typedef struct {
     char user[CRED_SIZE];
-    char book_name[TITLE_SIZE];
-};
+    int book_id;
+    int valid;
+} Issue;
 
 // Array to store all users and their online status
-extern struct On_status online_arr[MAX_CLIENTS];
+extern On_status online_arr[MAX_CLIENTS];
