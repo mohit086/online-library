@@ -8,6 +8,9 @@
 #include <fcntl.h>
 #include <pthread.h>
 #include <arpa/inet.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+#include <semaphore.h>
 
 #define MSG_SIZE 1024
 #define CRED_SIZE 32
@@ -48,3 +51,8 @@ typedef struct {
 
 // Array to store all users and their online status
 extern On_status online_arr[MAX_CLIENTS];
+
+// initialising semaphores for 3 files
+extern sem_t book_sem;
+extern sem_t user_sem;
+extern sem_t issue_sem;

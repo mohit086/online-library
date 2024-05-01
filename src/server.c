@@ -1,10 +1,10 @@
 #include "../headers/head.h"
-#include "../headers/utilities.h"
+#include "../headers/utils.h"
 On_status online_arr[MAX_CLIENTS];
 
 // handles client operations (Thread function)
 void* client_handler(void* sockfd){
-    int sock = *((int *)sockfd), choice;
+    int sock = *((int *)sockfd);
     char request[MSG_SIZE], response[MSG_SIZE];
     User* u = (User*)malloc(sizeof(User));
     server_side_authenticate(&sock, request, response, u);
@@ -47,6 +47,11 @@ void* client_handler(void* sockfd){
 }
 
 int main(){
+    // initialise semaphores
+    sem_init(&book_sem,0,1);
+    sem_init(&user_sem,0,1);
+    sem_init(&issue_sem,0,1);
+    
     memset(online_arr, 0, sizeof(online_arr));
     int server_fd, sock;
     struct sockaddr_in address;
@@ -77,5 +82,10 @@ int main(){
         pthread_create(&thrd, NULL, client_handler, (void *)&sock);
         pthread_detach(thrd);
     }
+
+    //destroy semaphore
+    sem_destroy(&book_sem);
+    sem_destroy(&user_sem);
+    sem_destroy(&issue_sem);
     return 0;
 }

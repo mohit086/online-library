@@ -1,6 +1,8 @@
 #include "../headers/head.h"
-#include "../headers/utilities.h"
-
+#include "../headers/utils.h"
+sem_t book_sem;
+sem_t user_sem;
+sem_t issue_sem;
 int get_client(char *username){
     for (int i = 0; i < MAX_CLIENTS; i++) if (strcmp(online_arr[i].name, username) == 0) return i;
     return -1;
@@ -20,10 +22,11 @@ int add_user(char *username){
 }
 
 void server_side_authenticate(int* sock, char* auth_request, char* auth_response, User* user){
+    sem_wait(&user_sem);
     while (1){
         char username[CRED_SIZE];
         char password[CRED_SIZE];
-        int choice, username_exists = 0, on = 0;
+        int choice, username_exists = 0;
 
         if (read(*sock, auth_request, MSG_SIZE) <= 0) return;
         sscanf(auth_request, "AUTH %d %[^/]/%s", &choice, username, password);
@@ -31,6 +34,7 @@ void server_side_authenticate(int* sock, char* auth_request, char* auth_response
         int fd = open("../db/user_db.dat", O_RDONLY);
         if (fd == -1){
             perror("DATABASE_ERROR");
+            sem_post(&user_sem);
             return;
         };
         User* temp = (User*)malloc(sizeof(User));
@@ -79,9 +83,11 @@ void server_side_authenticate(int* sock, char* auth_request, char* auth_response
             break;
         }
     }
+    sem_post(&user_sem);
 }
 
 void add_book(int id, char* title, char* author, int quantity, char* response){
+    sem_wait(&book_sem);
     memset(response,'\0',MSG_SIZE);
     Book* book = (Book*)malloc(sizeof(Book));
     book->id = id;
@@ -93,9 +99,11 @@ void add_book(int id, char* title, char* author, int quantity, char* response){
     write(fd,book,sizeof(Book));
     close(fd);
     sprintf(response,"BOOK %d ADDED SUCCESSFULLY\n",id);
+    sem_post(&book_sem);
 }
 
 void remove_book(int id, char* response){
+    sem_wait(&book_sem);
     memset(response,'\0',MSG_SIZE);
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book_db.dat", O_RDWR, 0666);
@@ -106,14 +114,17 @@ void remove_book(int id, char* response){
             write(fd,book,sizeof(Book));
             close(fd);
             sprintf(response,"BOOK %d REMOVED SUCCESSFULLY\n",id);
+            sem_post(&user_sem);
             return;
         }
     }
     sprintf(response,"BOOK %d NOT FOUND\n",id);
     close(fd);
+    sem_post(&book_sem);
 }
 
 void change_qty(int id, int quantity, char* response){
+    sem_wait(&book_sem);
     memset(response,'\0',MSG_SIZE);
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book_db.dat", O_RDWR, 0666);
@@ -124,14 +135,17 @@ void change_qty(int id, int quantity, char* response){
             write(fd,book,sizeof(Book));
             close(fd);
             sprintf(response,"UPDATED QUANTITY FOR BOOK %d\n",id);
+            sem_post(&book_sem);
             return;
         }
     }
     sprintf(response,"BOOK %d NOT FOUND\n",id);
     close(fd);
+    sem_post(&book_sem);
 }
 
 void remove_user(char* username, char* response){
+    sem_wait(&user_sem);
     memset(response,'\0',MSG_SIZE);
     User* user = (User*)malloc(sizeof(User));
     int fd = open("../db/user_db.dat", O_RDWR, 0666);
@@ -142,14 +156,17 @@ void remove_user(char* username, char* response){
             write(fd,user,sizeof(User));
             close(fd);
             sprintf(response,"USER %s REMOVED SUCESSFULLY\n",username);
+            sem_post(&user_sem);
             return;
         }
     }
     sprintf(response,"USER %s NOT FOUND",username);
     close(fd);
+    sem_post(&user_sem);
 }
 
 void view_all_issues(char* response){
+    sem_wait(&issue_sem);
     memset(response,'\0',MSG_SIZE);
     char line[MSG_SIZE];
     Issue* issue = (Issue*)malloc(sizeof(Issue));
@@ -161,9 +178,11 @@ void view_all_issues(char* response){
         }
     }
     close(fd);
+    sem_post(&issue_sem);
 }
 
 void view_avl_books(char* response){
+    sem_wait(&book_sem);
     memset(response,'\0',MSG_SIZE);
     char line[MSG_SIZE];
     Book* book = (Book*)malloc(sizeof(Book));
@@ -175,9 +194,11 @@ void view_avl_books(char* response){
         }
     }
     close(fd);
+    sem_post(&book_sem);
 }
 
 void view_mybooks(char* username, char* response){
+    sem_wait(&issue_sem);
     memset(response,'\0',MSG_SIZE);
     char line[MSG_SIZE];
     Issue* issue = (Issue*)malloc(sizeof(Issue));
@@ -189,9 +210,12 @@ void view_mybooks(char* username, char* response){
         }
     }
     close(fd);
+    sem_post(&issue_sem);
 }
 
 void issue_book(char* username, int id, char* response){
+    sem_wait(&book_sem);
+    sem_wait(&issue_sem);
     memset(response,'\0',MSG_SIZE);
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book_db.dat",O_RDWR);
@@ -213,13 +237,19 @@ void issue_book(char* username, int id, char* response){
             close(fd);
 
             sprintf(response,"BOOK %d ISSUED SUCCESSFULLY\n",id);
+            sem_post(&issue_sem);
+            sem_post(&book_sem);
             return;
         }
     }
     sprintf(response,"ERROR IN ISSUING BOOK\n");
+    sem_post(&issue_sem);
+    sem_post(&book_sem);
 }
 
 void return_book(char* username, int id, char* response){
+    sem_wait(&issue_sem);
+    sem_wait(&book_sem);
     memset(response,'\0',MSG_SIZE);
     Issue* issue = (Issue*)malloc(sizeof(Issue));
     int fd = open("../db/issue_db.dat",O_RDWR);
@@ -239,15 +269,20 @@ void return_book(char* username, int id, char* response){
                     write(fd2,book,sizeof(Book));
                     close(fd2);
                     sprintf(response,"BOOK %d RETURNED SUCCESSFULY\n",id);
+                    sem_post(&book_sem);
+                    sem_post(&issue_sem);
                     return;
                 }
             }
         }
     }
     sprintf(response,"ERROR IN RETURNING BOOK\n");
+    sem_post(&book_sem);
+    sem_post(&issue_sem);
 }
 
 void change_password(char* username, char* oldp, char* newp, char* response){
+    sem_wait(&user_sem);
     memset(response,'\0',MSG_SIZE);
     User* temp = (User*)malloc(sizeof(User));
     int fd = open("../db/user_db.dat",O_RDWR);
@@ -264,9 +299,11 @@ void change_password(char* username, char* oldp, char* newp, char* response){
         }
     }
     sprintf(response,"ERROR IN UPDATING PASSWORD\n");
+    sem_post(&user_sem);
 }
 
 void add_admin(char* username,char* password, char* response){
+    sem_wait(&user_sem);
     User* user = (User*)malloc(sizeof(User));
     int fd = open("../db/user_db.dat",O_RDWR|O_APPEND);
     while(read(fd,user,sizeof(User))){
@@ -283,4 +320,5 @@ void add_admin(char* username,char* password, char* response){
     write(fd,user,sizeof(User));
     close(fd);
     sprintf(response,"ADMIN ADDED SUCCESSFULLY\n");
+    sem_post(&user_sem);
 }

@@ -1,4 +1,4 @@
 .vscode
-/src/a.out
-/src/server
-/src/client
+/run/server
+/run/client
+/run/clear

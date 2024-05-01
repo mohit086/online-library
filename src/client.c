@@ -62,7 +62,7 @@ void operate(int* sock, int is_admin){
         if (!is_admin){
             while(1){
                 printf("Enter choice: ");
-                if (scanf("%d",&choice)!= 1 || choice<1 || choice>6){
+                if (scanf("%d",&choice)!= 1 || (choice<1 || choice>6)){
                     while (getchar() != '\n');
                     continue;
                 }
@@ -107,7 +107,7 @@ void operate(int* sock, int is_admin){
         else{
             while(1){
                 printf("Enter choice: ");
-                if (scanf("%d",&choice)!= 1 || choice<1 && choice>8){
+                if (scanf("%d",&choice)!= 1 || (choice<1 && choice>8)){
                     while (getchar() != '\n');
                     continue;
                 }
@@ -157,7 +157,7 @@ void operate(int* sock, int is_admin){
                 scanf(" %[^\n]",newp);
                 sprintf(request,"CHGPWD/0/%s/%s/0",oldp,newp);
                 break;
-            case(7):
+            case(7): // add another admin
                 memset(username,0,CRED_SIZE);
                 memset(oldp,0,CRED_SIZE);
                 printf("Enter username: ");
@@ -193,11 +193,11 @@ int main(){
     }
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT);
-    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr)<=0) { // Localhost
-        perror("Invalid address/ Address not supported");
+    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr)<=0){ // Localhost
+        perror("INVALID ADDRESS");
         return -1;
     }
-    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0){
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address))<0){
         perror("CONNECTION FAILED");
         return -1;
     }
