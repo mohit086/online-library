@@ -26,6 +26,7 @@ typedef struct{
 typedef struct {
     char username[CRED_SIZE];
     char password[CRED_SIZE];
+    int is_admin;
     int valid;
 } User;
 

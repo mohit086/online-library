@@ -20,12 +20,12 @@ int authenticate(int* sock){
         printf("Enter password: ");
         scanf("%s", password);
         sprintf(request, "AUTH %d %s/%s", choice, username, password);
-        send(*sock, request, MSG_SIZE, 0);
+        write(*sock, request, MSG_SIZE);
         read(*sock, response, MSG_SIZE);
-        if(strcmp(response,"AUTH_SUCCESS")==0){
+        if(strcmp(response,"AUTH_SUCCESS")==0 || strcmp(response,"ADMIN_AUTH_SUCCESS")==0){
             is_authenticated = 1;
             printf("\nAuthenticated successfully as %s.\n\n",username);
-            if (strcmp(username,"admin")==0) is_admin = 1;
+            if (strcmp(response,"ADMIN_AUTH_SUCCESS")==0 || strcmp(username,"admin")==0) is_admin = 1;
         }
         else printf("AUTHENTICATION ERROR - %s.\n\n",response);
     }
@@ -54,14 +54,15 @@ void operate(int* sock, int is_admin){
         printf("4 - Remove a user\n");
         printf("5 - View all issued books\n");
         printf("6 - Change password\n");
-        printf("7 - Logout\n\n");
+        printf("7 - Add admin\n");
+        printf("8 - Logout\n\n");
     }
     while(1){
         memset(response, '\0', MSG_SIZE);
         if (!is_admin){
             while(1){
                 printf("Enter choice: ");
-                if (scanf("%d",&choice)!= 1 || choice<1 || choice>8){
+                if (scanf("%d",&choice)!= 1 || choice<1 || choice>6){
                     while (getchar() != '\n');
                     continue;
                 }
@@ -106,7 +107,7 @@ void operate(int* sock, int is_admin){
         else{
             while(1){
                 printf("Enter choice: ");
-                if (scanf("%d",&choice)!= 1 || choice<1 && choice>7){
+                if (scanf("%d",&choice)!= 1 || choice<1 && choice>8){
                     while (getchar() != '\n');
                     continue;
                 }
@@ -156,14 +157,23 @@ void operate(int* sock, int is_admin){
                 scanf(" %[^\n]",newp);
                 sprintf(request,"CHGPWD/0/%s/%s/0",oldp,newp);
                 break;
-            case(7): // logout
+            case(7):
+                memset(username,0,CRED_SIZE);
+                memset(oldp,0,CRED_SIZE);
+                printf("Enter username: ");
+                scanf(" %[^\n]",username);
+                printf("Enter password: ");
+                scanf(" %[^\n]",oldp);
+                sprintf(request,"AADMIN/0/%s/%s/0",username,oldp);
+                break;
+            case(8): // logout
                 sprintf(request,"LOGOUT/0/x/x/0");
                 break;
             default:
                 break;
             }
         }
-        send(*sock, request, MSG_SIZE, 0);
+        write(*sock, request, MSG_SIZE);
         if (strcmp(request, "LOGOUT/0/x/x/0") == 0){
             printf("\nLOGGED OUT\n\n");
             break;

@@ -31,6 +31,7 @@ void* client_handler(void* sockfd){
         if (strcmp(cmd,"ISSUBK")==0) issue_book(u->username, n1, response);
         if (strcmp(cmd,"RTRNBK")==0) return_book(u->username, n1, response);
         if (strcmp(cmd,"CHGPWD")==0) change_password(u->username, s1, s2, response);
+        if (strcmp(cmd,"AADMIN")==0) add_admin(s1,s2,response);
         if (strcmp(cmd,"LOGOUT")==0){
             printf("%s LOGGED OUT\n\n", u->username);
             online_arr[get_client(u->username)].is_online = 0;

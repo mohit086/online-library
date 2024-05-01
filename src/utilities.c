@@ -1,13 +1,11 @@
 #include "../headers/head.h"
 #include "../headers/utilities.h"
 
-// returns index of the client if it exists
 int get_client(char *username){
     for (int i = 0; i < MAX_CLIENTS; i++) if (strcmp(online_arr[i].name, username) == 0) return i;
     return -1;
 }
 
-// adds a new user to the online array
 int add_user(char *username){
     if (get_client(username) == -1){
         for (int i = 0; i < MAX_CLIENTS; i++) {
@@ -21,7 +19,6 @@ int add_user(char *username){
     return 0;
 }
 
-// server side authentication
 void server_side_authenticate(int* sock, char* auth_request, char* auth_response, User* user){
     while (1){
         char username[CRED_SIZE];
@@ -36,20 +33,22 @@ void server_side_authenticate(int* sock, char* auth_request, char* auth_response
             perror("DATABASE_ERROR");
             return;
         };
-        User temp;
-        while(read(fd,&temp,sizeof(User))){
-            if (!strcmp(temp.username,username)){
+        User* temp = (User*)malloc(sizeof(User));
+        while(read(fd,temp,sizeof(User))){
+            if (!strcmp(temp->username,username)){
                 username_exists = 1;
                 break;
             }
         }
         close(fd);
+
         if (choice == 0){
             if (username_exists) strcpy(auth_response, "USERNAME EXISTS");
             else {
                 fd = open("../db/user_db.dat", O_RDWR|O_APPEND, 0666);
                 strcpy(user->username,username);
                 strcpy(user->password,password);
+                user->is_admin = 0;
                 user->valid = 1;
                 write(fd,user,sizeof(User));
                 close(fd);
@@ -59,21 +58,22 @@ void server_side_authenticate(int* sock, char* auth_request, char* auth_response
         }
 
         else if (choice == 1){
-            if (username_exists && temp.valid == 1){
-                if (strcmp(password, temp.password) == 0){
+            if (username_exists && temp->valid == 1){
+                if (strcmp(password, temp->password) == 0){
                     if (online_arr[get_client(username)].is_online) strcpy(auth_response, "ALREADY LOGGED IN");
                     else {
-                        strcpy(auth_response, "AUTH_SUCCESS");
+                        if (temp->is_admin) strcpy(auth_response, "ADMIN_AUTH_SUCCESS");
+                        else strcpy(auth_response, "AUTH_SUCCESS");
                         add_user(username);
-                        strcpy(user->username,temp.username);
-                        strcpy(user->password,temp.password);
+                        strcpy(user->username,temp->username);
+                        strcpy(user->password,temp->password);
                     }
                 }
                 else strcpy(auth_response, "INVALID PASSWORD");
             }
             else strcpy(auth_response, "USERNAME NOT FOUND");
         }  
-        send(*sock, auth_response, MSG_SIZE, 0);
+        write(*sock, auth_response, MSG_SIZE);
         if (strcmp(auth_response, "AUTH_SUCCESS") == 0){
             printf("%s CONNECTED\n\n", username);
             break;
@@ -170,7 +170,7 @@ void view_avl_books(char* response){
     int fd = open("../db/book_db.dat", O_RDONLY);
     while(read(fd,book,sizeof(Book))){
         if(book->valid){
-            sprintf(line,"ID: %d\n TITLE: %s\n AUTHOR: %s\n COPIES: %d\n\n", book->id, book->title, book->author, book->quantity);
+            sprintf(line,"ID: %d\nTITLE: %s\nAUTHOR: %s\nCOPIES: %d\n\n", book->id, book->title, book->author, book->quantity);
             strcat(response,line);
         }
     }
@@ -264,4 +264,23 @@ void change_password(char* username, char* oldp, char* newp, char* response){
         }
     }
     sprintf(response,"ERROR IN UPDATING PASSWORD\n");
+}
+
+void add_admin(char* username,char* password, char* response){
+    User* user = (User*)malloc(sizeof(User));
+    int fd = open("../db/user_db.dat",O_RDWR|O_APPEND);
+    while(read(fd,user,sizeof(User))){
+        if(strcmp(user->username,username)==0){
+            sprintf(response,"ADMIN ADD ERROR - USERNAME EXISTS");
+            close(fd);
+            return;
+        }
+    }
+    strcpy(user->username,username);
+    strcpy(user->password,password);
+    user->is_admin = 1;
+    user->valid = 1;
+    write(fd,user,sizeof(User));
+    close(fd);
+    sprintf(response,"ADMIN ADDED SUCCESSFULLY\n");
 }
