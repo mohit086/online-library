@@ -1,5 +1,6 @@
 #include "../headers/head.h"
-#include "../headers/utils.h"
+#include "../headers/server_utils.h"
+
 sem_t book_sem;
 sem_t user_sem;
 sem_t issue_sem;
@@ -189,7 +190,7 @@ void view_avl_books(char* response){
     int fd = open("../db/book_db.dat", O_RDONLY);
     while(read(fd,book,sizeof(Book))){
         if(book->valid){
-            sprintf(line,"ID: %d\nTITLE: %s\nAUTHOR: %s\nCOPIES: %d\n\n", book->id, book->title, book->author, book->quantity);
+            sprintf(line,"ID: %d\nTITLE: %s\nAUTHOR: %s\nCOPIES: %d\n", book->id, book->title, book->author, book->quantity);
             strcat(response,line);
         }
     }
@@ -223,10 +224,18 @@ void issue_book(char* username, int id, char* response){
         if (book->id == id && book->valid == 1){
 
             Issue* issue = (Issue*)malloc(sizeof(Issue));
+            int fd2 = open("../db/issue_db.dat",O_RDWR|O_APPEND, 0666);
+            while(read(fd2,issue,sizeof(Issue))){
+                if(issue->book_id == id && strcmp(issue->user,username)==0 && issue->valid){
+                    sprintf(response,"BOOK ALREADY ISSUED\n");
+                    sem_post(&issue_sem);
+                    sem_post(&book_sem);
+                    return;
+                }
+            }
             strcpy(issue->user,username);
             issue->book_id = id;
             issue->valid = 1;
-            int fd2 = open("../db/issue_db.dat",O_RDWR|O_APPEND, 0666);
             write(fd2,issue,sizeof(Issue));
             close(fd2);
 
@@ -242,7 +251,7 @@ void issue_book(char* username, int id, char* response){
             return;
         }
     }
-    sprintf(response,"ERROR IN ISSUING BOOK\n");
+    sprintf(response,"BOOK NOT FOUND\n");
     sem_post(&issue_sem);
     sem_post(&book_sem);
 }
@@ -279,27 +288,6 @@ void return_book(char* username, int id, char* response){
     sprintf(response,"ERROR IN RETURNING BOOK\n");
     sem_post(&book_sem);
     sem_post(&issue_sem);
-}
-
-void change_password(char* username, char* oldp, char* newp, char* response){
-    sem_wait(&user_sem);
-    memset(response,'\0',MSG_SIZE);
-    User* temp = (User*)malloc(sizeof(User));
-    int fd = open("../db/user_db.dat",O_RDWR);
-    while(read(fd,temp,sizeof(User))){
-        if(strcmp(temp->username,username)==0){
-            if (strcmp(temp->password,oldp)==0){
-                strcpy(temp->password,newp);
-                lseek(fd,-sizeof(User),SEEK_CUR);
-                write(fd,temp,sizeof(User));
-                close(fd);
-                sprintf(response,"PASSWORD UPDATED SUCCESSFULLY\n");
-                return;
-            }
-        }
-    }
-    sprintf(response,"ERROR IN UPDATING PASSWORD\n");
-    sem_post(&user_sem);
 }
 
 void add_admin(char* username,char* password, char* response){

@@ -1,16 +1,15 @@
 #include <stdio.h>
+#include <fcntl.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
-#include <sys/un.h>
-#include <sys/socket.h>
 #include <unistd.h>
-#include <fcntl.h>
+#include <sys/un.h>
 #include <pthread.h>
-#include <arpa/inet.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <arpa/inet.h>
 #include <semaphore.h>
+#include <sys/socket.h>
 
 #define MSG_SIZE 1024
 #define CRED_SIZE 32

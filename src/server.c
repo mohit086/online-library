@@ -8,7 +8,6 @@ void* client_handler(void* sockfd){
     char request[MSG_SIZE], response[MSG_SIZE];
     User* u = (User*)malloc(sizeof(User));
     server_side_authenticate(&sock, request, response, u);
-    printf("%s %s\n",u->username, u->password);
 
     while (1){
         memset(request, 0, sizeof(request));
@@ -30,7 +29,6 @@ void* client_handler(void* sockfd){
         if (strcmp(cmd,"MYBOOK")==0) view_mybooks(u->username, response);
         if (strcmp(cmd,"ISSUBK")==0) issue_book(u->username, n1, response);
         if (strcmp(cmd,"RTRNBK")==0) return_book(u->username, n1, response);
-        if (strcmp(cmd,"CHGPWD")==0) change_password(u->username, s1, s2, response);
         if (strcmp(cmd,"AADMIN")==0) add_admin(s1,s2,response);
         if (strcmp(cmd,"LOGOUT")==0){
             printf("%s LOGGED OUT\n\n", u->username);
