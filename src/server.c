@@ -1,5 +1,5 @@
 #include "../headers/head.h"
-#include "../headers/utils.h"
+#include "../headers/server_utils.h"
 On_status online_arr[MAX_CLIENTS];
 
 // handles client operations (Thread function)

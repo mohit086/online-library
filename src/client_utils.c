@@ -63,6 +63,7 @@ void operate(int* sock, int is_admin){
             while(1){
                 printf("Enter choice: ");
                 if (scanf("%d",&choice)!= 1 || (choice<1 || choice>8)){
+                    memset(response, '\0', MSG_SIZE);
                     while (getchar() != '\n');
                     continue;
                 }
@@ -99,6 +100,7 @@ void operate(int* sock, int is_admin){
             while(1){
                 printf("Enter choice: ");
                 if (scanf("%d",&choice)!= 1 || (choice<1 && choice>8)){
+                    memset(response, '\0', MSG_SIZE);
                     while (getchar() != '\n');
                     continue;
                 }

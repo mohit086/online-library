@@ -1,28 +1,25 @@
 CC = gcc
-CFLAGS = -Wall -Wextra
-LDFLAGS = -lpthread
-
 SRCDIR = src
 BINDIR = bin
 
-SERVER_SRC = $(SRCDIR)/server.c $(SRCDIR)/utils.c
-CLIENT_SRC = $(SRCDIR)/client.c
-DBCLEAR_SRC = $(SRCDIR)/clear_db.c
+SERVER_SRC = $(SRCDIR)/server.c $(SRCDIR)/server_utils.c
+CLIENT_SRC = $(SRCDIR)/client.c $(SRCDIR)/client_utils.c
+SETUP_SRC = $(SRCDIR)/setup.c
 
 SERVER = $(BINDIR)/server
 CLIENT = $(BINDIR)/client
-DBCLEAR = $(BINDIR)/dbclear
+SETUP = $(BINDIR)/setup
 
-all: $(SERVER) $(CLIENT) $(DBCLEAR)
+all: $(SERVER) $(CLIENT) $(SETUP)
 
 $(SERVER): $(SERVER_SRC)
-	$(CC) $(CFLAGS) $(LDFLAGS) $^ -o $@
+	$(CC) $^ -o $@
 
 $(CLIENT): $(CLIENT_SRC)
-	$(CC) $(CFLAGS) $^ -o $@
+	$(CC) $^ -o $@
 
-$(DBCLEAR): $(DBCLEAR_SRC)
-	$(CC) $(CFLAGS) $^ -o $@
+$(SETUP): $(SETUP_SRC)
+	$(CC) $^ -o $@
 
 clean:
-	rm -f $(SERVER) $(CLIENT) $(DBCLEAR)
+	rm -f $(SERVER) $(CLIENT) $(SETUP)
