@@ -189,20 +189,24 @@ void view_all_issues(char* response){
     sem_post(&issue_sem);
 }
 
-void view_avl_books(char* response){
+void view_avl_books(char* response) {
     sem_wait(&book_sem);
-    memset(response,'\0',MSG_SIZE);
+    memset(response, '\0', MSG_SIZE);
     char line[MSG_SIZE];
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book.dat", O_RDONLY);
-    while(read(fd,book,sizeof(Book))){
-        if(book->valid){
-            sprintf(line,"ID: %d\nTITLE: %s\nAUTHOR: %s\nCOPIES: %d\n\n", book->id, book->title, book->author, book->quantity);
-            strcat(response,line);
+    int book_found = 0;
+    lseek(fd, 0, SEEK_SET);
+    while (read(fd, book, sizeof(Book))) {
+        if (book->valid) {
+            book_found = 1;
+            sprintf(line, "ID: %d\nTITLE: %s\nAUTHOR: %s\nCOPIES: %d\n\n", book->id, book->title, book->author, book->quantity);
+            strcat(response, line);
         }
     }
     close(fd);
     sem_post(&book_sem);
+    if (!book_found) strcat(response, "NO BOOKS AVAILABLE");
 }
 
 void view_mybooks(char* username, char* response){

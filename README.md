@@ -12,7 +12,9 @@ Online Library Management System, done in C with operating systems concepts such
 - After cloning the repository, run the Makefile.
 ```bash
 make clean
-make
+```
+```bash
+make all
 ```
 
 - Navigate to /bin. Run setup to set the database, and then run the server or client.

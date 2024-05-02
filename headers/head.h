@@ -7,6 +7,7 @@
 #include <pthread.h>
 #include <sys/ipc.h>
 #include <sys/sem.h>
+#include <signal.h>
 #include <arpa/inet.h>
 #include <semaphore.h>
 #include <sys/socket.h>

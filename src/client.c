@@ -2,6 +2,7 @@
 #include "../headers/client_utils.h"
 
 int main(){
+    signal(SIGINT, sigint_ignore);
     int sock = 0;
     struct sockaddr_in server_address;
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0){
