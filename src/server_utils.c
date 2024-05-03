@@ -4,7 +4,6 @@
 sem_t book_sem;
 sem_t user_sem;
 sem_t issue_sem;
-
 int get_client(char *username){
     for (int i = 0; i < MAX_CLIENTS; i++) if (strcmp(online_arr[i].name, username) == 0) return i;
     return -1;
@@ -49,7 +48,7 @@ void server_side_authenticate(int* sock, char* request, char* response, User* us
         close(fd);
 
         if (choice == 0){
-            if (username_exists) strcpy(response, "USERNAME EXISTS\n\n");
+            if (username_exists) strcpy(response, "USERNAME EXISTS");
             else {
                 fd = open("../db/user.dat", O_RDWR|O_APPEND, 0666);
                 strcpy(user->username,username);
@@ -66,7 +65,7 @@ void server_side_authenticate(int* sock, char* request, char* response, User* us
         else if (choice == 1){
             if (username_exists && temp->valid == 1){
                 if (strcmp(password, temp->password) == 0){
-                    if (online_arr[get_client(username)].is_online) strcpy(response, "ALREADY LOGGED IN\n\n");
+                    if (online_arr[get_client(username)].is_online) strcpy(response, "ALREADY LOGGED IN");
                     else {
                         if (temp->is_admin) strcpy(response, "ADMIN_AUTH_SUCCESS");
                         else strcpy(response, "AUTH_SUCCESS");
@@ -75,9 +74,9 @@ void server_side_authenticate(int* sock, char* request, char* response, User* us
                         strcpy(user->password,temp->password);
                     }
                 }
-                else strcpy(response, "INVALID PASSWORD\n\n");
+                else strcpy(response, "INVALID PASSWORD");
             }
-            else strcpy(response, "USERNAME NOT FOUND\n\n");
+            else strcpy(response, "USERNAME NOT FOUND");
         }  
         write(*sock, response, MSG_SIZE);
         if (strcmp(response, "AUTH_SUCCESS") == 0){
@@ -117,7 +116,7 @@ void remove_book(int id, char* response){
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book.dat", O_RDWR, 0666);
     while(read(fd,book,sizeof(Book))){
-        if (book->id == id){
+        if (book->id == id && book->valid){
             book->valid = 0;
             lseek(fd, -sizeof(Book), SEEK_CUR);
             write(fd,book,sizeof(Book));
@@ -138,7 +137,7 @@ void change_qty(int id, int quantity, char* response){
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book.dat", O_RDWR, 0666);
     while(read(fd,book,sizeof(Book))){
-        if (book->id == id && book->valid==1){
+        if (book->id == id && book->valid){
             book->quantity = quantity;
             lseek(fd, -sizeof(Book), SEEK_CUR);
             write(fd,book,sizeof(Book));
@@ -159,7 +158,7 @@ void remove_user(char* username, char* response){
     User* user = (User*)malloc(sizeof(User));
     int fd = open("../db/user.dat", O_RDWR, 0666);
     while(read(fd,user,sizeof(User))){
-        if (strcmp(user->username, username)==0){
+        if (strcmp(user->username, username)==0 && user->valid){
             user->valid = 0;
             lseek(fd, -sizeof(User), SEEK_CUR);
             write(fd,user,sizeof(User));
@@ -178,20 +177,16 @@ void view_all_issues(char* response){
     sem_wait(&issue_sem);
     memset(response,'\0',MSG_SIZE);
     char line[MSG_SIZE];
-    int issue_found = 0;
     Issue* issue = (Issue*)malloc(sizeof(Issue));
     int fd = open("../db/issue.dat", O_RDONLY);
     while(read(fd, issue,sizeof(Issue))){
         if (issue->valid){
-            issue_found = 1;
             sprintf(line,"USER %s HAS ISSUED BOOK %d\n", issue->user, issue->book_id);
             strcat(response,line);
         }
     }
     close(fd);
-    if(issue_found==1) strcat(response,"\n");
     sem_post(&issue_sem);
-    if(issue_found==0) strcat(response,"NO BOOKS ISSUED\n\n");
 }
 
 void view_avl_books(char* response) {
@@ -201,6 +196,7 @@ void view_avl_books(char* response) {
     Book* book = (Book*)malloc(sizeof(Book));
     int fd = open("../db/book.dat", O_RDONLY);
     int book_found = 0;
+    lseek(fd, 0, SEEK_SET);
     while (read(fd, book, sizeof(Book))) {
         if (book->valid) {
             book_found = 1;
@@ -311,7 +307,7 @@ void add_admin(char* username,char* password, char* response){
     int fd = open("../db/user.dat",O_RDWR|O_APPEND);
     while(read(fd,user,sizeof(User))){
         if(strcmp(user->username,username)==0){
-            sprintf(response,"ADMIN ADD ERROR - USERNAME EXISTS\n\n");
+            sprintf(response,"ADMIN ERROR - USERNAME EXISTS\n\n");
             close(fd);
             return;
         }

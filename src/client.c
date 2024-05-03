@@ -11,11 +11,11 @@ int main(){
     }
     server_address.sin_family = AF_INET;
     server_address.sin_port = htons(PORT);
-    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr) <= 0){
+    if(inet_pton(AF_INET, "127.0.0.1", &server_address.sin_addr)<=0){
         perror("INVALID ADDRESS");
         return -1;
     }
-    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address)) < 0){
+    if (connect(sock, (struct sockaddr *)&server_address, sizeof(server_address))<0){
         perror("CONNECTION FAILED");
         return -1;
     }

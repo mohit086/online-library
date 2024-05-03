@@ -8,6 +8,6 @@ int main(){
     int fd3 = open("../db/issue.dat", O_CREAT | O_WRONLY, 0666);
     ftruncate(fd1, 0); ftruncate(fd2, 0); ftruncate(fd3, 0);
     close(fd1); close(fd2); close(fd3);
-    printf("SUCCESS\n");
+    printf("Success\n");
     sem_post(&s3); sem_post(&s2); sem_post(&s1);
 }

@@ -15,7 +15,7 @@
 #define MSG_SIZE 1024
 #define CRED_SIZE 64
 #define MAX_CLIENTS 10
-#define PORT 8080
+#define PORT 8081
 #define TITLE_SIZE 64
 #define AUTHOR_SIZE 64
 

@@ -25,10 +25,10 @@ int authenticate(int* sock){
         read(*sock, response, MSG_SIZE);
         if(strcmp(response,"AUTH_SUCCESS")==0 || strcmp(response,"ADMIN_AUTH_SUCCESS")==0){
             is_authenticated = 1;
-            printf("\nAuthenticated successfully as %s.\n\n",username);
+            printf("\nAuthenticated successfully as %s\n\n",username);
             if (strcmp(response,"ADMIN_AUTH_SUCCESS")==0 || strcmp(username,"admin")==0) is_admin = 1;
         }
-        else printf("AUTHENTICATION ERROR - %s.\n\n",response);
+        else printf("AUTHENTICATION ERROR - %s\n\n",response);
     }
     return is_admin;
 }
