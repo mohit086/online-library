@@ -21,7 +21,7 @@ $(CLIENT): $(CLIENT_SRC)
 	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
 
 $(SETUP): $(SETUP_SRC)
-	$(CC) $(CFLAGS) $^ -o $@ $(LDFLAGS)
+	$(CC) $(CFLAGS) $^ -o $@
 
 clean:
 	rm -f $(SERVER) $(CLIENT) $(SETUP)

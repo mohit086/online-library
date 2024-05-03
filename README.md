@@ -10,9 +10,11 @@ Online Library Management System, done in C with operating systems concepts such
 ## Run Locally
 
 - After cloning the repository, run the Makefile.
+
 ```bash
 make clean
 ```
+
 ```bash
 make all
 ```

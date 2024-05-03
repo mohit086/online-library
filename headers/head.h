@@ -13,7 +13,7 @@
 #include <sys/socket.h>
 
 #define MSG_SIZE 1024
-#define CRED_SIZE 32
+#define CRED_SIZE 64
 #define MAX_CLIENTS 10
 #define PORT 8080
 #define TITLE_SIZE 64

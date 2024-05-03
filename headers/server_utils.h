@@ -1,6 +1,6 @@
 int get_client(char *username);
 int add_user(char *username);
-void server_side_authenticate(int* sock, char* auth_request, char* response, User* user);
+void server_side_authenticate(int* sock, char* request, char* response, User* user);
 void add_book(int id, char* title, char* author, int quantity, char* response);
 void remove_book(int id, char* response);
 void change_qty(int id, int quantity, char* response);

@@ -166,11 +166,11 @@ void operate(int* sock, int is_admin){
             break;
         }
         read(*sock, response, MSG_SIZE);
-        printf("%s\n", response);
+        printf("%s", response);
     }
     return;
 }
 
-void sigint_ignore(){
+void ignore_sigint(){
     ;
 }

@@ -11,11 +11,6 @@ void* client_handler(void* sockfd){
 
     while (1){
         memset(request, 0, sizeof(request));
-        if (read(sock, request, MSG_SIZE) == 0){
-            printf("%s LOGGED OUT\n\n", u->username);
-            online_arr[get_client(u->username)].is_online = 0;
-            break;
-        }
         char cmd[MSG_SIZE], s1[MSG_SIZE], s2[MSG_SIZE];
         int n1, n2;
         sscanf(request, "%[^/]/%d/%[^/]/%[^/]/%d", cmd, &n1, s1, s2, &n2);
@@ -37,7 +32,7 @@ void* client_handler(void* sockfd){
         }
         printf("%s: %s\n", u->username, request);
         write(sock,response,MSG_SIZE);
-        printf("server: %s\n\n", response);
+        printf("server: %s", response);
     }
 
     close(sock);
